@@ -6,6 +6,7 @@ const upload=require('../middlewares/upload.js')
 
 
 Router.get('/realisations',realisation.getAllRealisations)
+Router.get('/realisations/services',realisation.getWorksServices)
 Router.get('/realisation/:id',realisation.getOneRealisation)
 Router.delete('/realisation/:id',realisation.deleteRealisation)
 Router.post('/realisation/create',upload.array("realisations"),realisation.createRealisation)

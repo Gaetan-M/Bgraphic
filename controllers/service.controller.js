@@ -115,11 +115,6 @@ module.exports.updateServiceImage=(req,res,next)=>{
 */
 module.exports.addImageService=(req,res,next)=>{
 	let index=req.files.length
-
-	for (let i = 0; i < req.files.length; i++) {
-		
-		
-	}
 	let results=[];
 	let result;
 	req.files.map(async(file)=>{
@@ -185,6 +180,7 @@ module.exports.addServiceRealisation=(req,res,next)=>{
 */
 module.exports.getAllServices=(req,res,next)=>{
 	Service.find()
+	.populate('realisations')
 	.then(service=>res.status(200).json({services:service}))
 	.catch(error=>{
 		console.log('services find error : ',error);
@@ -251,3 +247,4 @@ module.exports.updateService=(req,res,next)=>{
 		res.status(500).json({message:error.message});
 	})
 }
+

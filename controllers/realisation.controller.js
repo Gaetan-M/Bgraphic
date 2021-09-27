@@ -1,110 +1,7 @@
-/*
-const Realisation = require('../models/realisation.model.js');
-require('dotenv').config();
-const multer = require('multer');
-const GridFsStorage = require('multer-gridfs-storage');
-const Grid = require('gridfs-stream');
-const mongoose = require('mongoose');
-// Mongo URI
-const mongoURI = process.env.MONGO_URI;
-// Create mongo connection
-const conn = mongoose.createConnection(mongoURI,{ useUnifiedTopology: true ,useNewUrlParser: true});
-// Init gf
-let gfs;
-
-conn.once('open', () => {
-  // Init stream
-  gfs = Grid(conn.db, mongoose.mongo);  
-  gfs.collection('Images');
-});
-module.exports.createRealisation=(req,res,next)=>{
-	console.log(req.body);	
-	const {name,description}=req.body
-	const realisation = new Realisation({
-		...req.body,
-	})
-	realisation.save()
-	.then(realisation=>{
-		res.status(200).json({message:'new realisation created !',realisation:realisation});
-	})
-	.catch(error=>{
-		res.status(500).json({message:'error ! realisation not created'});
-		console.log('realisation',error);
-	})
-}
-
-module.exports.updateRealisationImage=(req,res,next)=>{
-	let id=req.params.id
-	console.log(req.files.realisations)
-	Service.updateOne({_id:id},{
-		$push:{
-			imageUrls:{
-				$each:req.files.services.map(service=>
-					{
-						let url={url:`http://localhost:8080/service/image/${id}/${service.filename}`,_id:service.id};
-						return url;
-					}
-				)
-			}
-		}
-	})
-	.then(user=>res.status(200).json({message:`service Image of ${user.fullname} was updated`}))
-	.then(error=>res.status(404).json({message:'service does not exist'}))
-}
- function getID (id){
-	 return id;
-}
-module.exports.getAllRealisations=(req,res,next)=>{
-	Service.find()
-	.then(service=>res.status(200).json({services:service}))
-	.catch(error=>{
-		console.log('services find error : ',error);
-		res.status(500).json({message:error.message});
-	})
-}
-module.exports.getRealisationImage=async (req,res,next)=>{
-	let filename=getID(req.params.filename)
-	console.log(filename);
-	gfs.files.findOne({filename:filename},(err,file)=>{
-		console.log(file)
-		// check if image exist
-		if (!file || file.length ===0) {
-			return res.status(404).json({message:'this service image does not exist'})
-		}
-		const readstream = gfs.createReadStream(file.filename);
-      	return readstream.pipe(res);
-	})
-}
-
-module.exports.deleteRealisation=(req,res,next)=>{
-	let id=req.params.id
-	Service.findOneAndDelete({_id:id})
-	.then(service=>res.status(200).json({message:`service ${service.name} account was delete successfully !`}))
-	.catch(error=>{
-		console.log('error when trying to delete service ',error);
-		res.status(500).json({message:error.message});
-	})
-}
-module.exports.deleteRealisationImage=(req,res,next)=>{
-	let id=req.params.id
-	let filename=req.params.filename;
-	Service.updateOne({_id:id},{
-		$pull:{
-			imageUrls:{url:`http://localhost:8080/service/image/${id}/${filename}`}
-		}
-	})
-	.then(service=>{
-		// Service.deleteOne({_id:id})
-		console.log(service)
-		res.status(200).json({message:`service ${service.name} account was delete successfully !`})
-	})
-	.catch(error=>{
-		console.log('error when trying to delete service ',error);
-		res.status(500).json({message:error.message});
-	})
-}*/
 
 const Realisation = require('../models/realisation.model.js');
+
+const Service = require('../models/service.model.js');
 require('dotenv').config();
 const multer = require('multer');
 const GridFsStorage = require('multer-gridfs-storage');
@@ -145,17 +42,24 @@ module.exports.createRealisation=(req,res,next)=>{
 	})
 	realisation.save()
 
-	.then(realisation=>{
+	.then(async realisation =>{
+	Service.updateOne({_id:req.body.id},{
+		$push:{
+			realisations:realisation._id
+		}
+	})
+	.then(result=>{console.log(result)
 		res.status(200).json({
 			message:'realisation succesfully created',
 			realisation:realisation
-	})
+	})})
+	.catch(error=>console.log(error))
 	})
 	.catch(error=>{
 		res.status(400).json({error})
 		console.log(error)
 	}) 
-   }, 10000);
+   }, 5000);
 }
 
 module.exports.addImageRealisation=(req,res,next)=>{
@@ -226,7 +130,17 @@ module.exports.getOneRealisation=(req,res,next)=>{
 module.exports.deleteRealisation=(req,res,next)=>{
 	let id=req.params.id
 	Realisation.findOneAndDelete({_id:id})
-	.then(realisation=>res.status(200).json({message:`realisation ${realisation.name} account was delete successfully !`}))
+	.then(realisation=>{
+		Service.updateOne({_id:req.body.idService},{
+			$pull:{
+				realisation:id
+			}
+		})
+		.then(result=>{
+			res.status(200).json({message:`realisation ${realisation.name} account was delete successfully !`})
+		})
+		.catch(error=>console.log(error))
+	})
 	.catch(error=>{
 		console.log('error when trying to delete realisation ',error);
 		res.status(500).json({message:error.message});
@@ -238,6 +152,35 @@ module.exports.updateRealisation=(req,res,next)=>{
 	.then(realisation=>res.status(200).json({message:`realisation ${realisation.name} account was update successfully !`}))
 	.catch(error=>{
 		console.log('error when trying to ypdate realisation ',error);
+		res.status(500).json({message:error.message});
+	})
+}
+
+module.exports.getWorksServices=(req,res,next)=>{
+	console.log('hello')
+	Service.find()
+	//.populate('service')
+	.then(services=>{
+		console.log(services)
+		Realisation.find()
+		.then(realisations=>{
+			services.map(service=>{
+
+			})
+		})
+		/*
+		const service = realisations.service
+		result = realisations.reduce(function (r, a) {
+			r[a.service] = r[a.service] || [];
+			r[a.service].push(a);
+			return r;
+		},Object.create(null))
+		console.log(result)
+		*/
+		res.status(200).json(result)
+	})	
+	.catch(error=>{
+		console.log('error when trying to ypdate service ',error);
 		res.status(500).json({message:error.message});
 	})
 }

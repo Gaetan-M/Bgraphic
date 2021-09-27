@@ -7,7 +7,11 @@ const serviceSchema=mongoose.Schema({
 	moreDescription:String,
 	type:String,
 	contact:String,
-	imageUrls:[{}]
+	imageUrls:[{}],
+	realisations:[{
+		type:mongoose.Schema.Types.ObjectId,
+		ref:'Realisation'
+	}]
 })
 
 module.exports=mongoose.model('Service',serviceSchema);
